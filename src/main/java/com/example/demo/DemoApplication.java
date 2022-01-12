@@ -5,6 +5,7 @@ import org.influxdb.dto.QueryResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -21,6 +22,9 @@ public class DemoApplication {
     @Autowired
     private MqttGateway mqttGateway;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private final Random random =  new Random();
 
     @RequestMapping("/save")
@@ -34,8 +38,12 @@ public class DemoApplication {
         tagMap.put("id","1");
         HashMap<String, Object> filedMap = new HashMap<>();
         filedMap.put("temperature",temperature);
+        //保存至Influx
         influxDBConfig.insert("temperature",tagMap,filedMap);
+        //发送至MQ
         mqttGateway.sendToMqtt(String.valueOf(temperature),"temperature");
+        //保存至SqlLite
+        jdbcTemplate.execute("update from a wher id =1");
         return Mono.just(data);
     }
     @RequestMapping("/queryResult")

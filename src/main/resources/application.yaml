@@ -17,3 +17,9 @@ spring:
     consumer:
       clientId: 111
       defaultTopic: a
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    username:
+    password:
+    url: jdbc:sqlite:jdbc:sqlite::resource:test.db
+

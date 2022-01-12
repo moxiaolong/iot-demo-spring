@@ -1,0 +1,19 @@
+spring:
+  #influxDB配置信息
+  influx:
+    url: *
+    password: admin
+    user: 123
+    database: test_data
+  #MQTT配置信息
+  mqtt:
+    username: root
+    password: root
+    url: tcp://127.0.0.1:1883
+    defalut:
+      topic: topic
+    client:
+      id: aaa
+    consumer:
+      clientId: 111
+      defaultTopic: a

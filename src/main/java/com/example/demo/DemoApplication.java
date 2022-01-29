@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 演示应用程序
@@ -52,24 +53,23 @@ public class DemoApplication {
         //发送至MQ
         mqttGateway.sendToMqtt(String.valueOf(temperature), "temperature");
 
-        return Mono.fromSupplier(() -> {
+        return Mono.fromCompletionStage(CompletableFuture.supplyAsync(() -> {
             //保存至SqlLite
-            jdbcTemplate.update("update temperature_data set temperature="+temperature+" where id =1");
+            jdbcTemplate.update("update temperature_data set temperature=" + temperature + " where id =1");
             return data;
-        });
+        }));
     }
 
     @GetMapping("/queryResult")
     public Mono<QueryResult> getQueryResult() {
-        QueryResult queryResult = influxDBConfig.query("test", "SELECT MEAN(temperature) FROM \"temperature\" WHERE time > now() - 20m");
-        return Mono.just(queryResult);
+        return Mono.fromCompletionStage(CompletableFuture.supplyAsync(() -> influxDBConfig.query("test", "SELECT MEAN(temperature) FROM \"temperature\" WHERE time > now() - 20m")));
     }
 
     @GetMapping("/testBlock")
     public Mono<String> testBlock() {
 
         log.info("testBlock in");
-        Mono<String> stringMono = Mono.fromSupplier(() -> {
+        Mono<String> stringMono = Mono.fromCompletionStage(CompletableFuture.supplyAsync(() -> {
             try {
                 Thread.sleep(3000L);
                 log.info("testBlock result");
@@ -78,7 +78,7 @@ public class DemoApplication {
             }
             return "ok";
 
-        });
+        }));
         log.info("testBlock out");
         return stringMono;
     }

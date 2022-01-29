@@ -1,25 +1,25 @@
 spring:
   #influxDB配置信息
   influx:
-    url: *
-    password: admin
-    user: 123
-    database: test_data
+    url: http://localhost:8086
+    user: root
+    password: root
   #MQTT配置信息
   mqtt:
-    username: root
-    password: root
+    username: admin
+    password: public
     url: tcp://127.0.0.1:1883
-    defalut:
+    default:
       topic: topic
     client:
-      id: aaa
+      id: iot-demo-spring
     consumer:
-      clientId: 111
-      defaultTopic: a
+      clientId: iot-demo-spring-consumer
+      defaultTopic: topic
+
   datasource:
     driver-class-name: org.sqlite.JDBC
-    username:
-    password:
-    url: jdbc:sqlite:jdbc:sqlite::resource:test.db
+    username: ""
+    password: ""
+    url: jdbc:sqlite:test.sqlite
 

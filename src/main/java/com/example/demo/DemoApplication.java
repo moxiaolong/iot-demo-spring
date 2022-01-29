@@ -14,6 +14,12 @@ import reactor.core.publisher.Mono;
 import java.util.HashMap;
 import java.util.Random;
 
+/**
+ * 演示应用程序
+ *
+ * @author dragon
+ * @date 2022/01/29
+ */
 @SpringBootApplication
 @RestController
 @Slf4j
@@ -42,20 +48,20 @@ public class DemoApplication {
         HashMap<String, Object> filedMap = new HashMap<>();
         filedMap.put("temperature", temperature);
         //保存至Influx
-        influxDBConfig.insert("temperature", tagMap, filedMap);
+        influxDBConfig.insert("test", "temperature", tagMap, filedMap);
         //发送至MQ
         mqttGateway.sendToMqtt(String.valueOf(temperature), "temperature");
 
         return Mono.fromSupplier(() -> {
             //保存至SqlLite
-            jdbcTemplate.execute("update from a wher id =1");
+            jdbcTemplate.update("update temperature_data set temperature="+temperature+" where id =1");
             return data;
         });
     }
 
     @GetMapping("/queryResult")
     public Mono<QueryResult> getQueryResult() {
-        QueryResult queryResult = influxDBConfig.query("SELECT MEAN(temperature) FROM temperature where tag=testSensor");
+        QueryResult queryResult = influxDBConfig.query("test", "SELECT MEAN(temperature) FROM \"temperature\" WHERE time > now() - 20m");
         return Mono.just(queryResult);
     }
 

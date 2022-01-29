@@ -17,8 +17,13 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.MessagingException;
-import org.springframework.util.StringUtils;
 
+/**
+ * mqtt配置
+ *
+ * @author dragon
+ * @date 2022/01/29
+ */
 @Configuration
 @IntegrationComponentScan
 public class MqttConfig {
@@ -85,7 +90,7 @@ public class MqttConfig {
         MqttPahoMessageDrivenChannelAdapter adapter =
                 new MqttPahoMessageDrivenChannelAdapter(
                         consumerClientId, mqttClientFactory(),
-                        StringUtils.split(consumerDefaultTopic, ","));
+                        consumerDefaultTopic);
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setQos(1);
@@ -119,5 +124,6 @@ public class MqttConfig {
             }
         };
     }
+
 
 }

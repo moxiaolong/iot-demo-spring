@@ -1,19 +1,22 @@
 package com.example.demo;
 
 import com.example.demo.config.InfluxDBConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.influxdb.dto.QueryResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
+
 import java.util.HashMap;
 import java.util.Random;
 
 @SpringBootApplication
 @RestController
+@Slf4j
 public class DemoApplication {
 
     @Autowired
@@ -25,43 +28,59 @@ public class DemoApplication {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private final Random random =  new Random();
+    private final Random random = new Random();
 
-    @RequestMapping("/save")
-    public Mono<Data> saveData(){
+    @GetMapping("/save")
+    public Mono<Data> saveData() {
         //随机温度
         int temperature = random.nextInt(21) + 16;
         Data data = new Data();
         data.setSensorName("testSensor");
         data.setTemperature(temperature);
         HashMap<String, String> tagMap = new HashMap<>();
-        tagMap.put("id","1");
+        tagMap.put("id", "1");
         HashMap<String, Object> filedMap = new HashMap<>();
-        filedMap.put("temperature",temperature);
+        filedMap.put("temperature", temperature);
         //保存至Influx
-        influxDBConfig.insert("temperature",tagMap,filedMap);
+        influxDBConfig.insert("temperature", tagMap, filedMap);
         //发送至MQ
-        mqttGateway.sendToMqtt(String.valueOf(temperature),"temperature");
-        //保存至SqlLite
-        jdbcTemplate.execute("update from a wher id =1");
-        return Mono.just(data);
+        mqttGateway.sendToMqtt(String.valueOf(temperature), "temperature");
+
+        return Mono.fromSupplier(() -> {
+            //保存至SqlLite
+            jdbcTemplate.execute("update from a wher id =1");
+            return data;
+        });
     }
-    @RequestMapping("/queryResult")
-    public Mono<QueryResult> getQueryResult(){
+
+    @GetMapping("/queryResult")
+    public Mono<QueryResult> getQueryResult() {
         QueryResult queryResult = influxDBConfig.query("SELECT MEAN(temperature) FROM temperature where tag=testSensor");
         return Mono.just(queryResult);
     }
 
-    @RequestMapping("/testBlock")
-    public Mono<String> testBlock() throws InterruptedException {
-        Thread.sleep(3000L);
-        return Mono.just("ok");
+    @GetMapping("/testBlock")
+    public Mono<String> testBlock() {
+
+        log.info("testBlock in");
+        Mono<String> stringMono = Mono.fromSupplier(() -> {
+            try {
+                Thread.sleep(3000L);
+                log.info("testBlock result");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return "ok";
+
+        });
+        log.info("testBlock out");
+        return stringMono;
     }
 
     /**
      * 数据实体
      */
-    private static class Data{
+    private static class Data {
         /**
          * 温度
          */
@@ -87,10 +106,10 @@ public class DemoApplication {
             this.sensorName = sensorName;
         }
     }
+
     public static void main(String[] args) {
         SpringApplication.run(DemoApplication.class, args);
     }
-
 
 
 }

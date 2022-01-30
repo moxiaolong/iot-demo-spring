@@ -9,11 +9,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * 演示应用程序
@@ -38,7 +37,7 @@ public class DemoApplication {
     private final Random random = new Random();
 
     @GetMapping("/save")
-    public Mono<Data> saveData() {
+    public Data saveData() {
         //随机温度
         int temperature = random.nextInt(21) + 16;
         Data data = new Data();
@@ -50,38 +49,33 @@ public class DemoApplication {
         filedMap.put("temperature", temperature);
 
         //下面三个操作都是阻塞的，变成非阻塞
-        return Mono.fromCompletionStage(CompletableFuture.supplyAsync(() -> {
-            //保存至Influx
-            influxDBConfig.insert("test", "temperature", tagMap, filedMap);
-            //发送至MQ
-            mqttGateway.sendToMqtt(String.valueOf(temperature), "temperature");
-            //保存至SqlLite
-            jdbcTemplate.update("update temperature_data set temperature=" + temperature + " where id =1");
-            return data;
-        }));
+
+        //保存至Influx
+        influxDBConfig.insert("test", "temperature", tagMap, filedMap);
+        //发送至MQ
+        mqttGateway.sendToMqtt(String.valueOf(temperature), "temperature");
+        //保存至SqlLite
+        jdbcTemplate.update("update temperature_data set temperature=" + temperature + " where id =1");
+        return data;
+
     }
 
     @GetMapping("/queryResult")
-    public Mono<QueryResult> getQueryResult() {
-        return Mono.fromCompletionStage(CompletableFuture.supplyAsync(() -> influxDBConfig.query("test", "SELECT MEAN(temperature) FROM \"temperature\" WHERE time > now() - 20m")));
+    public QueryResult getQueryResult() {
+        return influxDBConfig.query("test", "SELECT MEAN(temperature) FROM \"temperature\" WHERE time > now() - 20m");
     }
 
     @GetMapping("/testBlock")
-    public Mono<String> testBlock() {
-
+    public String testBlock() throws ExecutionException, InterruptedException {
         log.info("testBlock in");
-        Mono<String> stringMono = Mono.fromCompletionStage(CompletableFuture.supplyAsync(() -> {
-            try {
-                Thread.sleep(3000L);
-                log.info("testBlock result");
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return "ok";
+        try {
+            Thread.sleep(3000L);
+            log.info("testBlock result");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "ok";
 
-        }));
-        log.info("testBlock out");
-        return stringMono;
     }
 
     /**

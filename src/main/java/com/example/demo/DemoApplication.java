@@ -48,12 +48,13 @@ public class DemoApplication {
         tagMap.put("id", "1");
         HashMap<String, Object> filedMap = new HashMap<>();
         filedMap.put("temperature", temperature);
-        //保存至Influx
-        influxDBConfig.insert("test", "temperature", tagMap, filedMap);
-        //发送至MQ
-        mqttGateway.sendToMqtt(String.valueOf(temperature), "temperature");
 
+        //下面三个操作都是阻塞的，变成非阻塞
         return Mono.fromCompletionStage(CompletableFuture.supplyAsync(() -> {
+            //保存至Influx
+            influxDBConfig.insert("test", "temperature", tagMap, filedMap);
+            //发送至MQ
+            mqttGateway.sendToMqtt(String.valueOf(temperature), "temperature");
             //保存至SqlLite
             jdbcTemplate.update("update temperature_data set temperature=" + temperature + " where id =1");
             return data;

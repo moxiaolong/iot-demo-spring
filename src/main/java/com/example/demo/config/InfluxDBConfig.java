@@ -24,8 +24,6 @@ public class InfluxDBConfig {
 
     @Autowired
     private InfluxDB influxDB;
-
-
     /**
      * 插入
      *

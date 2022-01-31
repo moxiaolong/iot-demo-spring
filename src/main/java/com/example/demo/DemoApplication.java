@@ -43,9 +43,9 @@ public class DemoApplication {
         Data data = new Data();
         data.setSensorName("testSensor");
         data.setTemperature(temperature);
-        HashMap<String, String> tagMap = new HashMap<>();
+        HashMap<String, String> tagMap = new HashMap<>(1);
         tagMap.put("id", "1");
-        HashMap<String, Object> filedMap = new HashMap<>();
+        HashMap<String, Object> filedMap = new HashMap<>(1);
         filedMap.put("temperature", temperature);
 
         //下面三个操作都是阻塞的，变成非阻塞

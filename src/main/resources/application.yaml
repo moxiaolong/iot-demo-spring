@@ -22,4 +22,5 @@ spring:
     username: ""
     password: ""
     url: jdbc:sqlite:test.sqlite
-
+server:
+  port: 8083
